@@ -161,7 +161,7 @@ def find_chorus(chroma, sr, song_length_sec, clip_length):
     return best_chorus.start / chroma_sr
 
 
-def find_and_output_chorus(input_file, output_file, clip_length=15):
+def find_and_output_chorus(input_acc: str, input_origin: str,output_file: str, pattern_candidate: list,clip_length=15):
     """
     Finds the most repeated chorus from input_file and outputs to output file.
 
@@ -173,17 +173,31 @@ def find_and_output_chorus(input_file, output_file, clip_length=15):
 
     Returns: Time in seconds of the start of the best chorus
     """
-    chroma, song_wav_data, sr, song_length_sec = create_chroma(input_file)
+    chroma, _, sr, song_length_sec = create_chroma(input_acc)
+    _, song_wav_data_origin, sr_origin, _ = create_chroma(input_origin)
     chorus_start = find_chorus(chroma, sr, song_length_sec, clip_length)
     if chorus_start is None:
         return
+
+    ##  Choose result from pattern candidate.
+    delta_time = 2 ** 16
+    result_start = chorus_start
+    result_end = chorus_start + clip_length
+    for i, data in enumerate(pattern_candidate):
+        start_time, end_time = data
+        if abs(chorus_start - start_time) < delta_time:
+            delta_time = abs(chorus_start - start_time)
+            result_start = start_time
+            result_end = end_time
+        else:
+            pass
 
     print("Best chorus found at {0:g} min {1:.2f} sec".format(
         chorus_start // 60, chorus_start % 60))
 
     if output_file is not None:
-        chorus_wave_data = song_wav_data[int(chorus_start*sr) : int((chorus_start+clip_length)*sr)]
-        sf.write(output_file, chorus_wave_data, sr)
+        chorus_wave_data = song_wav_data_origin[int(result_start * sr_origin) : int(result_end * sr_origin)]
+        sf.write(output_file, chorus_wave_data, sr_origin)
         #librosa.output.write_wav(output_file, chorus_wave_data, sr)
 
-    return chorus_start
+    return result_start
