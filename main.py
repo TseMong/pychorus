@@ -9,8 +9,16 @@ from tqdm import tqdm
 from pychorus.helpers import *
 from pychorus import Duration
 
+####
 
 no_word = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '[', ']', ',', '.', '<', '>', ':']
+root = 'data'
+songs_root = os.path.join(root, 'songs')
+lyric_root = os.path.join(root, 'lyrics')
+json_root = os.path.join(root, 'json')
+
+####
+
 
 def get_sentence_ts(line: str) -> float:
     minute, second = re.search(r'\[(.*)\]', line).groups()[0].split(':')
@@ -86,9 +94,6 @@ def get_lyric_seg(filepath: str) -> tuple:
 
 if __name__ == "__main__":
 
-    root = 'C:/Users/MZ/Desktop/Blackbox/6x5songs'
-    songs_root = os.path.join(root, '6x5songs')
-    lyric_root = os.path.join(root, 'lyrics_utf8')
     #for item in get_lyric_seg(os.path.join(lyric_root, '7022619.txt')):
     #    print(item)
 
