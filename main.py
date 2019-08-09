@@ -13,6 +13,7 @@ from pychorus.helpers import *
 no_word = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '[', ']', ',', '.', '<', '>', ':']
 root = 'data'
 songs_root = os.path.join(root, 'songs')
+accs_root = os.path.join(root, 'accompany')
 lyric_root = os.path.join(root, 'lyrics')
 json_root = os.path.join(root, 'json')
 
@@ -102,7 +103,8 @@ if __name__ == "__main__":
     #interval = [round(inv, 3) for inv in interval if inv >= (np.mean(interval) + np.std(interval) * 1)]
     #print(interval)
 
-    chroma, y, sr, song_length_sec = create_chroma(os.path.join(songs_root, songname + '.mp2'))
+    #chroma, y, sr, song_length_sec = create_chroma(os.path.join(songs_root, songname + '.mp2'))
+    chroma, y, sr, song_length_sec = create_chroma(os.path.join(accs_root, songname + '.mp3'))
     num_samples = chroma.shape[1]
 
 
@@ -117,7 +119,7 @@ if __name__ == "__main__":
                 similarity_chroma[idx1, idx2] = cal_chroma_similarity(chroma_lyric[idx1], chroma_lyric[idx2])
             else:
                 similarity_chroma[idx1, idx2] = 1
-    with open('similar_idx.txt', 'w') as f:
+    with open('similar.txt', 'w') as f:
         for idx in range(similarity_chroma.shape[0]):
             #f.write(lyric_info[idx][-1]+',')
             f.write(str(idx) + ',')
@@ -129,7 +131,7 @@ if __name__ == "__main__":
                     flag += 1
                 else:
                     pass
-                if flag == 10:
+                if flag == 5:
                     break
             #f.write(str(np.argsort(similarity_chroma[idx])[:4]))
             f.write('\n')
