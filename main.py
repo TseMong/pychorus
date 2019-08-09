@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 from pychorus.helpers import *
-from pychorus import Duration
 
 ####
 
@@ -96,19 +95,43 @@ if __name__ == "__main__":
 
     #for item in get_lyric_seg(os.path.join(lyric_root, '7022619.txt')):
     #    print(item)
-
-    lyric_info = get_lyric_seg(os.path.join(lyric_root, '7022619.txt'))
+    songname = '同桌的你'
+    lyric_info = get_lyric_seg(os.path.join(lyric_root, songname + '.txt'))
     #interval = np.array(lyric_info[:, 3], dtype=float)
     #interval = [round(inv, 3) for inv in interval if inv <= (np.mean(interval) + np.std(interval) * 3)]
     #interval = [round(inv, 3) for inv in interval if inv >= (np.mean(interval) + np.std(interval) * 1)]
     #print(interval)
 
-    chroma, y, sr, song_length_sec = create_chroma(os.path.join(songs_root, '十年.mp2'))
+    chroma, y, sr, song_length_sec = create_chroma(os.path.join(songs_root, songname + '.mp2'))
     num_samples = chroma.shape[1]
 
 
     # Denoise the time lag matrix
     chroma_sr = num_samples / song_length_sec
     chroma_lyric = [chroma[:, int(float(lyric_info[idx, 0]) * chroma_sr): int(float(lyric_info[idx, 1]) * chroma_sr)] for idx in range(lyric_info.shape[0])]
-    for idx in range(len(chroma_lyric)):
-        print(lyric_info[14][-1], lyric_info[idx][-1], cal_chroma_similarity(chroma_lyric[14], chroma_lyric[idx]))
+    similarity_chroma = np.zeros((len(chroma_lyric), len(chroma_lyric)))
+    for idx1 in range(len(chroma_lyric)):
+        #print(lyric_info[14][-1], lyric_info[idx][-1], cal_chroma_similarity(chroma_lyric[14], chroma_lyric[idx]))
+        for idx2 in range(len(chroma_lyric)):
+            if abs(int(lyric_info[idx1][2]) - int(lyric_info[idx2][2])) <= 0:
+                similarity_chroma[idx1, idx2] = cal_chroma_similarity(chroma_lyric[idx1], chroma_lyric[idx2])
+            else:
+                similarity_chroma[idx1, idx2] = 1
+    with open('similar_idx.txt', 'w') as f:
+        for idx in range(similarity_chroma.shape[0]):
+            #f.write(lyric_info[idx][-1]+',')
+            f.write(str(idx) + ',')
+            flag = 0
+            for idx_lyric in range(similarity_chroma.shape[1]):
+                if similarity_chroma[idx][np.argsort(similarity_chroma[idx])[idx_lyric]] != 0 and similarity_chroma[idx][np.argsort(similarity_chroma[idx])[idx_lyric]] != 10:
+                    #f.write(str(lyric_info[np.argsort(similarity_chroma[idx])[idx_lyric]][-1])+',')
+                    f.write(str(np.argsort(similarity_chroma[idx])[idx_lyric])+',')
+                    flag += 1
+                else:
+                    pass
+                if flag == 10:
+                    break
+            #f.write(str(np.argsort(similarity_chroma[idx])[:4]))
+            f.write('\n')
+    # 相似系数（与后面相似的程度） & 包含系数（副歌句子出现的位置必定是副歌）
+    # 两个系数 相互trade-off 达到nash-balance
