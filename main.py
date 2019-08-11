@@ -97,14 +97,14 @@ def get_chroma_similarity(filepath: str, lyric_info: np.array) -> np.array:
     similarity_chroma = np.zeros((len(chroma_lyric), len(chroma_lyric)))
     for idx1 in range(len(chroma_lyric)):
         for idx2 in range(len(chroma_lyric)):
-            if abs(int(lyric_info[idx1][2]) - int(lyric_info[idx2][2])) <= 1:
+            if abs(int(lyric_info[idx1][2]) - int(lyric_info[idx2][2])) <= 1:   # word num error
                 similarity_chroma[idx1, idx2] = 1 - cal_chroma_similarity(chroma_lyric[idx1], chroma_lyric[idx2])
             else:
                 similarity_chroma[idx1, idx2] = 0
     return similarity_chroma
 
 def get_similar_seg_matrix(similarity_chroma: np.array) -> np.array:
-    similar_seg_matrix = np.zeros((similarity_chroma.shape[0], 5)) - 1
+    similar_seg_matrix = np.zeros((similarity_chroma.shape[0], 10)) - 1
     for idx in range(similarity_chroma.shape[0]):
         flag = 0
         for idx_lyric in range(similarity_chroma.shape[1]):
@@ -119,7 +119,9 @@ def get_similar_seg_matrix(similarity_chroma: np.array) -> np.array:
     return similar_seg_matrix
 
 def find_seg(idx: list, similar_seg_matrix: np.array, flag_matrix: np.array) -> tuple:
-    start_value = similar_seg_matrix[idx[0], idx[1]]
+    start_value = int(similar_seg_matrix[idx[0], idx[1]])
+    if start_value == -1:
+        return (False, [[], []])
     flag_matrix[idx[0], idx[1]] = 1
     seg1 = [start_value,]
     seg2 = [idx[0],]
@@ -138,6 +140,8 @@ def find_seg(idx: list, similar_seg_matrix: np.array, flag_matrix: np.array) -> 
             flag = True
         else:
             break
+    if len(seg1) <= 4:
+        flag = False
     
     return (flag, [seg1, seg2])
 
@@ -158,21 +162,54 @@ def get_candidate_paragraph(similar_seg_matrix: np.array) -> np.array:
                 pass
     return seg_candidate
 
-            
+def get_root_lyric_line(candidate_paragraph: list, sentence_num: int) -> list:
+    def add_node(node_list: np.array, row: int,node: int) -> np.array:
+        for idx in range(node_list[row].shape[-1]):
+            if node in node_list[row] or node == row:
+                break
+            elif node_list[row][idx] == -1:
+                node_list[row][idx] = node
+            else:
+                pass
+        return node_list[row]
+
+    def get_min_index(similar_list: np.array, idx: int) -> int:
+        # not all is -1
+        # not the min index
+        while max(similar_list[idx]) >= 0 and min([int(num) for num in similar_list[idx] if num >= 0]) < idx:
+            idx = min([int(num) for num in similar_list[idx] if num >= 0])
+
+        return int(idx)
+
+    similar_list = np.zeros((sentence_num, 10)) - 1
+    for seg_group in candidate_paragraph:
+        seg1, seg2 = seg_group
+        for idx in range(len(seg1)):
+            similar_list[seg2[idx]] = add_node(similar_list, seg2[idx], seg1[idx])
+
+    for idx in range(sentence_num-1, -1, -1):
+        if idx not in similar_list[get_min_index(similar_list, idx)]:
+            similar_list[get_min_index(similar_list, idx)] = add_node(similar_list, get_min_index(similar_list, idx), idx)
+    
+    return similar_list
+
+
+
 
 #   歌词中含有歌曲名字 副歌区间开始置信度增加
 #
 if __name__ == "__main__":
 
 
-    songname = '十年'
-    #lyric_info = get_lyric_seg(os.path.join(lyric_root, songname + '.txt'))
-    for item in get_lyric_seg(os.path.join(lyric_root, songname + '.txt')):
-        print(item)
-    #similarity_chroma = get_chroma_similarity(os.path.join(accs_root, songname + '.mp3'), lyric_info)
+    songname = '我的好兄弟'
+    lyric_info = get_lyric_seg(os.path.join(lyric_root, songname + '.txt'))
+    #for item in get_lyric_seg(os.path.join(lyric_root, songname + '.txt')):
+    #    print(item)
+    similarity_chroma = get_chroma_similarity(os.path.join(accs_root, songname + '.mp3'), lyric_info)
 
-    #similar_seg_matrix = get_similar_seg_matrix(similarity_chroma)
-    #print(get_candidate_paragraph(similar_seg_matrix))
-    
+    similar_seg_matrix = get_similar_seg_matrix(similarity_chroma)
+    root_line = get_root_lyric_line(get_candidate_paragraph(similar_seg_matrix), similar_seg_matrix.shape[0])
+    for idx, line in enumerate(root_line):
+        print('{}\t{}\t{}'.format(line, round(float(lyric_info[idx][-2]), 3), lyric_info[idx][-1]))
     # 相似系数（与后面相似的程度） & 包含系数（副歌句子出现的位置必定是副歌）
     # 两个系数 相互trade-off 达到nash-balance
