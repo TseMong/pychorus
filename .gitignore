@@ -1,4 +1,4 @@
-*.csv
+.csv
 *.pyc
 .vscode
 __pycache__
