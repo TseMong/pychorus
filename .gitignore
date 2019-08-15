@@ -5,3 +5,4 @@ __pycache__
 *.txt
 data/chorus_audio
 data/chorus_audio_only_txt
+data/chorus_200songs

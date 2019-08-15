@@ -70,10 +70,10 @@ def extract(songPath_list: list, accPath_list: list, lyricPath_list: list, lengt
             highlight_start_dis_res = []
             # distance is better than interval 
 
-            cs = get_segment_only_txt.ComputeSection(lyricPath_list[idx], pattern='chr')
-            pattern_candidate = cs.get_result() # 2-D
+            #cs = get_segment_only_txt.ComputeSection(lyricPath_list[idx], pattern='chr')
+            #pattern_candidate = cs.get_result() # 2-D
 
-            #pattern_candidate = get_segment_audio_txt.get_final_paragraph(songPath, lyricPath_list[idx])
+            pattern_candidate = get_segment_audio_txt.get_final_paragraph(songPath, lyricPath_list[idx])
 
 
             for start, end in pattern_candidate:

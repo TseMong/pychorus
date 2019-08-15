@@ -16,5 +16,5 @@ if __name__ == '__main__':
         songPath.append(songs_root + '/' + name + '.mp2')
         accPath.append(accs_root + '/' + name + '.mp3')
         lyricPath.append(lyric_root + '/' + name + '.txt')
-    np.save('./data/chorus_audio_only_txt/{}.npy'.format('30songs_highlights'), get_chorus.extract(songPath, accPath, lyricPath, save_wav=True))
+    np.save('./data/chorus_audio/{}.npy'.format('30songs_highlights'), get_chorus.extract(songPath, accPath, lyricPath, save_wav=True))
     
