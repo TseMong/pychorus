@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 from chorus.helpers import *
-
 ####
 
 no_word = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '[', ']', ',', '.', '<', '>', ':']
@@ -142,7 +141,7 @@ def find_seg(idx: list, similar_seg_matrix: np.array, flag_matrix: np.array) -> 
             flag = True
         else:
             break
-    if len(seg1) <= 2:  # or len(seg1) >= 20:
+    if len(seg1) <= 2 or len(seg1) >= 20:
         flag = False
     
     return (flag, [seg1, seg2])
@@ -188,11 +187,6 @@ def get_root_lyric_line(candidate_paragraph: list, sentence_num: int) -> list:
         seg1, seg2 = seg_group
         for idx in range(len(seg1)):
             similar_list[seg2[idx]] = add_node(similar_list, seg2[idx], seg1[idx])
-
-    #for idx in range(sentence_num-1, -1, -1):
-        #if idx not in similar_list[get_min_index(similar_list, idx)]:
-        #    similar_list[get_min_index(similar_list, idx)] = add_node(similar_list, get_min_index(similar_list, idx), idx)
-        #similar_list[idx] = add_node(similar_list, idx, idx) # add idx for every line 
     
     return similar_list
 
@@ -225,19 +219,19 @@ def get_seg_point(root_lyric_line: np.array, lyric_info: np.array) -> np.array: 
             seg_point[idx] = 1
             if seg_point[idx-1] == 1:   #   连续分割track
                 seg_point[idx-1] = 0
-        elif sum(root_lyric_line[idx]) == -10:  #   如果[-1, ..., -1]，则自动与上一句连接
-            continue
-        elif prev_break_num - prev_cont_num > 0:
+        elif prev_break_num - prev_cont_num > 0:#= 0 and prev_break_num != 0:
             seg_point[idx] = 1
-            if seg_point[idx-1] == 1 and idx != 1:   #   连续分割track, 开头避开
+            if seg_point[idx-1] == 1 and idx != 1 and float(lyric_info[idx-1, -2]) < 5:   #   连续分割track, 开头避开
                 seg_point[idx-1] = 0
+            elif seg_point[idx-1] == 1 and idx != 1 and float(lyric_info[idx-1, -2]) >= 5:
+                seg_point[idx] = 0
             else:
                 pass
+        elif sum(root_lyric_line[idx]) == -10:  #   如果[-1, ..., -1]，则自动与上一句连接
+            continue
         else:
             pass
-    
-        #if (prev_break_num - prev_cont_num) - (next_break_num - next_cont_num) >= 0:
-        #    seg_point[]
+
 
     return seg_point
 
@@ -267,8 +261,6 @@ def get_final_paragraph(songPath: str, lyricPath: str) -> list: #   Origin song 
         else:   #   中间0，非开头0，非末尾0
             temp_paragraph[1] = float(lyric_info[idx, 1])
     return final_paragraph
-    
-
 
 
 
@@ -276,10 +268,9 @@ def get_final_paragraph(songPath: str, lyricPath: str) -> list: #   Origin song 
 
 #   歌词中含有歌曲名字 副歌区间开始置信度增加
 #
-if __name__ == "__main__":
 
-
-    songname = '爱'   # 因为爱情
+def main():
+    songname = '女人花'   # 因为爱情
     lyric_info = get_lyric_seg(os.path.join(lyric_root, songname + '.txt'))
 
     #similarity_chroma = get_chroma_similarity(os.path.join(accs_root, songname + '.mp3'), lyric_info)
@@ -293,10 +284,13 @@ if __name__ == "__main__":
     seg_point = get_seg_point(root_line, lyric_info)
     for idx, point in enumerate(seg_point):
         print('{}\t{}\t{}\t{}\t->{}\t{}'.format(root_line[idx], point, round(float(lyric_info[idx][-2]), 3), round(float(lyric_info[idx][0]), 3), round(float(lyric_info[idx][1]), 3), lyric_info[idx][-1]))
-    print(get_final_paragraph(os.path.join(songs_root, songname + '.mp2'), os.path.join(lyric_root, songname + '.txt')))
+    #print(get_final_paragraph(os.path.join(songs_root, songname + '.mp2'), os.path.join(lyric_root, songname + '.txt')))
     # 相似系数（与后面相似的程度） & 包含系数（副歌句子出现的位置必定是副歌）
     # 两个系数 相互trade-off 达到nash-balance
     # 部分地方整句拆开  脑袋都是你心里都是你 脑袋都是你/心里都是你
     
     
     # 相似矩阵的最大索引越界
+
+if __name__ == "__main__":
+    main()
