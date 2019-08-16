@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from chorus.helpers import *
+from chorus.helpers import create_chroma
 ####
 
 no_word = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '[', ']', ',', '.', '<', '>', ':']
@@ -90,7 +90,7 @@ def get_lyric_seg(filepath: str) -> tuple:
     return np.array(info)
 
 def get_chroma_similarity(filepath: str, lyric_info: np.array) -> np.array:
-    chroma, y, sr, song_length_sec = create_chroma(filepath)
+    chroma, _, _, song_length_sec = create_chroma(filepath)
     num_samples = chroma.shape[1]
     chroma_sr = num_samples / song_length_sec
     chroma_lyric = [chroma[:, int(float(lyric_info[idx, 0]) * chroma_sr): int(float(lyric_info[idx, 1]) * chroma_sr)] for idx in range(lyric_info.shape[0])]
@@ -153,7 +153,7 @@ def get_candidate_paragraph(similar_seg_matrix: np.array) -> np.array:
     seg_candidate = []
     for idx1 in range(similar_seg_matrix.shape[0]):
         for idx2 in range(similar_seg_matrix.shape[1]):
-            if flag_matrix[idx1, idx2] == 0:
+            if flag_matrix[idx1][idx2] == 0:
                 save_flag, seg = find_seg([idx1, idx2], similar_seg_matrix, flag_matrix)
                 if save_flag == True:
                     seg_candidate.append(seg)
@@ -173,7 +173,7 @@ def get_root_lyric_line(candidate_paragraph: list, sentence_num: int) -> list:
             else:
                 pass
         return node_list[row]
-
+    '''
     def get_min_index(similar_list: np.array, idx: int) -> int:
         # not all is -1
         # not the min index
@@ -181,7 +181,7 @@ def get_root_lyric_line(candidate_paragraph: list, sentence_num: int) -> list:
             idx = min([int(num) for num in similar_list[idx] if num >= 0])
 
         return int(idx)
-
+    '''
     similar_list = np.zeros((sentence_num, candidate_limit)) - 1
     for seg_group in candidate_paragraph:
         seg1, seg2 = seg_group
