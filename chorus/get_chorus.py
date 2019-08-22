@@ -59,7 +59,7 @@ def extract(songPath_list: list, accPath_list: list, lyricPath_list: list, lengt
             # score
             attn_score = attn_score / attn_score.max()
             if save_score:
-                np.save('result/{}_score.npy'.format(name), attn_score)
+                np.save('data/chorus_audio/{}_score.npy'.format(name), attn_score)
 
             # thumbnail
             attn_score = attn_score.cumsum()
@@ -93,7 +93,7 @@ def extract(songPath_list: list, accPath_list: list, lyricPath_list: list, lengt
 
             if save_wav:
                 #librosa.output.write_wav('result/{}_audio_int.wav'.format(name), audio[int(highlight_interval_res[0]*sr):int(highlight_interval_res[1]*sr)], sr)
-                librosa.output.write_wav('./data/chorus_audio/{}.wav'.format(name), audio[int(highlight_start_dis_res[0]*sr):int(highlight_start_dis_res[1]*sr)], sr)
+                librosa.output.write_wav('./data/chorus_audio/{}_3_15_noequal0.wav'.format(name), audio[int(highlight_start_dis_res[0]*sr):int(highlight_start_dis_res[1]*sr)], sr)
     if len(songPath_list) == 1:
         return np.array(total_highlight).reshape(1, 2)[0]
     else:

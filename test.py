@@ -12,13 +12,15 @@ songListFile = './data/table/final.csv'
 songList = pd.read_csv(songListFile)
 
 if __name__ == '__main__':
-    #names = songList.loc[:199, 'songname']
-    ids = songList.loc[:199, 'songID']
-
+    
+    names = list(songList.loc[:200, 'songname'])
+    #ids = list(songList.loc[:43, 'songID']).extend(list(songList.loc[45:199, 'songID']))
+    ids = list(songList.loc[:200, 'songID'])
     songPath, accPath, lyricPath = [], [], []
     for idx in ids:
-        songPath.append(origin_root + '/' + str(idx) + '.mp3')
-        accPath.append(accompany_root + '/' + str(idx) + '.mp3')
+        songPath.append(origin_root + '/' + str(idx) + '_1.mp3')
+        accPath.append(accompany_root + '/' + str(idx) + '_2.mp3')
         lyricPath.append(lyric_root + '/' + str(idx) + '.txt')
-    np.save('./data/chorus_audio/{}.npy'.format('200songs_highlights'), get_chorus.extract(songPath, accPath, lyricPath, save_wav=True))
+    np.save('./data/chorus_audio/{}.npy'.format('0-201songs_highlights_3_15_noequal0'), get_chorus.extract(songPath, accPath, lyricPath, save_wav=True))
+
     

@@ -141,7 +141,7 @@ def find_seg(idx: list, similar_seg_matrix: np.array, flag_matrix: np.array) -> 
             flag = True
         else:
             break
-    if len(seg1) <= 2 or len(seg1) >= 20:
+    if len(seg1) <= 3 or len(seg1) >= 15:
         flag = False
     
     return (flag, [seg1, seg2])
@@ -217,7 +217,7 @@ def get_seg_point(root_lyric_line: np.array, lyric_info: np.array) -> np.array: 
         #next_break_num, next_cont_num = get_break_and_cont(root_lyric_line[idx], root_lyric_line[idx+1])
         if float(lyric_info[idx, -2]) >= 5: #   歌曲段落间隔大于5s 切分， 另开新的一段
             seg_point[idx] = 1
-            if seg_point[idx-1] == 1:   #   连续分割track
+            if seg_point[idx-1] == 1 and idx != 1:   #   连续分割track
                 seg_point[idx-1] = 0
         elif prev_break_num - prev_cont_num > 0:#= 0 and prev_break_num != 0:
             seg_point[idx] = 1
@@ -225,13 +225,14 @@ def get_seg_point(root_lyric_line: np.array, lyric_info: np.array) -> np.array: 
                 seg_point[idx-1] = 0
             elif seg_point[idx-1] == 1 and idx != 1 and float(lyric_info[idx-1, -2]) >= 5:
                 seg_point[idx] = 0
+            elif idx == 1 and float(lyric_info[idx-1, -2]) < 5:
+                seg_point[idx] = 0
             else:
                 pass
         elif sum(root_lyric_line[idx]) == -10:  #   如果[-1, ..., -1]，则自动与上一句连接
             continue
         else:
             pass
-
 
     return seg_point
 
