@@ -55,7 +55,7 @@ def cal_chroma_similarity(chroma1: np.array, chroma2: np.array) -> float:
     else:
         return cal_iou_smilarity(chroma2, chroma1)
 
-def get_lyric_seg(filepath: str) -> tuple:
+def get_lyric_seg(filepath: str) -> np.array:
     '''
     input:
     filepath: string
@@ -215,17 +215,20 @@ def get_seg_point(root_lyric_line: np.array, lyric_info: np.array) -> np.array: 
     for idx in range(1, root_lyric_line.shape[0]-1):    #   判断当前句属于上段还是下段,又或者当前不切分-----当前句是否切分
         prev_break_num, prev_cont_num = get_break_and_cont(root_lyric_line[idx-1], root_lyric_line[idx])
         #next_break_num, next_cont_num = get_break_and_cont(root_lyric_line[idx], root_lyric_line[idx+1])
-        if float(lyric_info[idx, -2]) >= 5: #   歌曲段落间隔大于5s 切分， 另开新的一段
+        limit_time_conti = 1#   歌曲段落间隔大于5s 切分， 另开新的一段
+        if float(lyric_info[idx, -2]) >= limit_time_conti: #   歌曲段落间隔大于5s 切分， 另开新的一段
             seg_point[idx] = 1
-            if seg_point[idx-1] == 1 and idx != 1:   #   连续分割track
+            if seg_point[idx-1] == 1 and float(lyric_info[idx, -2]) < float(lyric_info[idx-1, -2]):
+                seg_point[idx] = 0
+            elif seg_point[idx-1] == 1 and idx != 1:   #   连续分割track
                 seg_point[idx-1] = 0
         elif prev_break_num - prev_cont_num > 0:#= 0 and prev_break_num != 0:
             seg_point[idx] = 1
-            if seg_point[idx-1] == 1 and idx != 1 and float(lyric_info[idx-1, -2]) < 5:   #   连续分割track, 开头避开
+            if seg_point[idx-1] == 1 and idx != 1 and float(lyric_info[idx-1, -2]) < limit_time_conti:   #   连续分割track, 开头避开
                 seg_point[idx-1] = 0
-            elif seg_point[idx-1] == 1 and idx != 1 and float(lyric_info[idx-1, -2]) >= 5:
+            elif seg_point[idx-1] == 1 and idx != 1 and float(lyric_info[idx-1, -2]) >= limit_time_conti:
                 seg_point[idx] = 0
-            elif idx == 1 and float(lyric_info[idx-1, -2]) < 5:
+            elif idx == 1 and float(lyric_info[idx-1, -2]) < limit_time_conti:
                 seg_point[idx] = 0
             else:
                 pass
@@ -271,7 +274,7 @@ def get_final_paragraph(songPath: str, lyricPath: str) -> list: #   Origin song 
 #
 
 def main():
-    songname = '女人花'   # 因为爱情
+    songname = '我的好兄弟'   # 因为爱情
     lyric_info = get_lyric_seg(os.path.join(lyric_root, songname + '.txt'))
 
     #similarity_chroma = get_chroma_similarity(os.path.join(accs_root, songname + '.mp3'), lyric_info)
