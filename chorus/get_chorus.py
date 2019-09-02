@@ -65,7 +65,6 @@ def extract(songPath_list: list, accPath_list: list, lyricPath_list: list, lengt
             attn_score = attn_score.cumsum()
             attn_score = np.append(attn_score[length], attn_score[length:] - attn_score[:-length])
             index = np.argmax(attn_score)
-            
             highlight_start_dis = 2 ** 16 
             highlight_start_dis_res = []
             # distance is better than interval 
