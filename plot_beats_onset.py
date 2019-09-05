@@ -13,7 +13,7 @@ import os
 ################################################################################
 # load file
 def load_file():
-    file_path = os.path.join(os.path.abspath('.'), "BEYOND-不再犹豫-drum.mp3")
+    file_path = os.path.join(os.path.abspath('.'), "test_data", "7016317_1_drums_izotope.mp3")
     y, sr = librosa.load(file_path)
     return y, sr
 
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     o_env = librosa.onset.onset_strength(y, sr=sr)
     times = librosa.frames_to_time(np.arange(len(o_env)), sr=sr)
     onset_frames = librosa.onset.onset_detect(onset_envelope=o_env, sr=sr)
-    with open('beats.txt', 'w') as f:
+    with open('./test_data/beats_lydia_izotope.txt', 'w') as f:
         for time in times[onset_frames]:
             f.writelines(str(time) + '\n')
     # import matplotlib.pyplot as plt
