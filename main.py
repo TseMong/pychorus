@@ -92,18 +92,18 @@ if __name__ == '__main__':
         lyricPath.append(lyric_root + '/' + name + '.txt')
     np.save('./data/chorus_audio/{}.npy'.format('30songs_highlights'), get_chorus.extract(songPath, accPath, lyricPath, save_wav=False))
     '''
-    # with codecs.open('30songs_seg.json', mode='r', encoding='GBK') as f:
-    #     seg = json.load(f)
-    # with codecs.open('highlight.json', mode='r', encoding='GBK') as f:
-    #     point = json.load(f)
-    # lyric_info = get_lyric_seg(os.path.join(lyric_root, '大海' + '.txt'))
-    # pp = paragraph_parser(lyric_info, seg['大海'], point['大海'])
-    # seg_points = pp.get_candidate_seg_sentence()
-    # for idx in range(lyric_info.shape[0]):
-    #     print('{}\t{}\t{}\t->{}\t{}\t\t{}'.format(idx, round(float(lyric_info[idx][-2]), 3), round(float(lyric_info[idx][0]), 3), round(float(lyric_info[idx][1]), 3), seg_points[idx],lyric_info[idx][-1]))
-    # print(point['大海'], seg['大海'][np.argmin(abs(np.array(seg['大海']) - point['大海']))])
-    # print(seg['大海'])
+    with codecs.open('30songs_seg_v3.json', mode='r', encoding='GBK') as f:
+        seg = json.load(f)
+    with codecs.open('highlight.json', mode='r', encoding='GBK') as f:
+        point = json.load(f)
+    lyric_info = get_lyric_seg(os.path.join(lyric_root, '爱情转移' + '.txt'))
+    pp = paragraph_parser(lyric_info, seg['爱情转移'], point['爱情转移'])
+    seg_points = pp.get_candidate_seg_sentence()
+    for idx in range(lyric_info.shape[0]):
+        print('{}\t{}\t{}\t->{}\t{}\t\t{}'.format(idx, round(float(lyric_info[idx][-2]), 3), round(float(lyric_info[idx][0]), 3), round(float(lyric_info[idx][1]), 3), seg_points[idx],lyric_info[idx][-1]))
+    print(point['爱情转移'], seg['爱情转移'][np.argmin(abs(np.array(seg['爱情转移']) - point['爱情转移']))])
+    print(seg['爱情转移'])
 
-    main()
+    # main()
 
     
