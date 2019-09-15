@@ -37,19 +37,4 @@ def get_beats_msls(filepath, beats=[]):   #   read beats from annotations
     ###                                     ###
     ###########################################
     return lstm_input
-
-
-if __name__ == '__main__':
-    root = 'C:/Users/MZ/Desktop/Blackbox/The beatles'
-    audio_dir = os.path.join(root, 'audios')
-    annotation_dir = os.path.join(root, 'annotations')
-    filepool = os.listdir('C:/Users/MZ/Desktop/Blackbox/The beatles/mslms')
-    for file in tqdm(os.listdir(annotation_dir)):
-        #if file.split('.')[0] + '.npy' in filepool:
-        #    continue
-        anno = json.load(open(os.path.join(annotation_dir, file), 'r'))
-        beats = np.array(anno['beats'], dtype=np.float)
-        beats = librosa.core.time_to_frames(beats, sr=22050, hop_length=512)#, n_fft=2048)
-        np.save('C:/Users/MZ/Desktop/Blackbox/The beatles/mslms/{}.npy'.format(file.split('.')[0]), get_beats_msls(os.path.join(audio_dir, file.split('.')[0] + '.mp3'), beats))
-        # with open(os.path.join(annotation_dir, file), 'w') as f:
-        #     json.dump(anno, f, indent=2)
+    
