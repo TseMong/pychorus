@@ -15,7 +15,7 @@ class paragraph_parser():
         self.sentence = lyric_info[:, -1]   #   句子文本
         self.start = lyric_info[:, 0].astype(np.float)  #   每句开始
         self.end = lyric_info[:, 1].astype(np.float)    #   每句结束
-        self.duration = lyric_info[:, 3].astype(np.float)   #   当前句与上一句间隔
+        self.duration = lyric_info[:, 3].astype(np.float)   #   最炫民族风前句与上一句间隔
         self.seg_candidate = seg_point  #   msaf的分割点
         self.chorus_pre = chorus_pre
     
@@ -92,17 +92,22 @@ if __name__ == '__main__':
         lyricPath.append(lyric_root + '/' + name + '.txt')
     np.save('./data/chorus_audio/{}.npy'.format('30songs_highlights'), get_chorus.extract(songPath, accPath, lyricPath, save_wav=False))
     '''
-    with codecs.open('30songs_seg_v3.json', mode='r', encoding='GBK') as f:
+    with codecs.open('30songs_seg.json', mode='r', encoding='GBK') as f:
         seg = json.load(f)
+    with codecs.open('30songs_seg_v3.json', mode='r', encoding='GBK') as f:
+        seg_v3 = json.load(f)
     with codecs.open('highlight.json', mode='r', encoding='GBK') as f:
         point = json.load(f)
-    lyric_info = get_lyric_seg(os.path.join(lyric_root, '爱情转移' + '.txt'))
-    pp = paragraph_parser(lyric_info, seg['爱情转移'], point['爱情转移'])
+    lyric_info = get_lyric_seg(os.path.join(lyric_root, '最炫民族风' + '.txt'))
+    pp = paragraph_parser(lyric_info, seg['最炫民族风'], point['最炫民族风'])
+    pp_v3 = paragraph_parser(lyric_info, seg_v3['最炫民族风'], point['最炫民族风'])
     seg_points = pp.get_candidate_seg_sentence()
+    seg_points_v3 = pp_v3.get_candidate_seg_sentence()
     for idx in range(lyric_info.shape[0]):
-        print('{}\t{}\t{}\t->{}\t{}\t\t{}'.format(idx, round(float(lyric_info[idx][-2]), 3), round(float(lyric_info[idx][0]), 3), round(float(lyric_info[idx][1]), 3), seg_points[idx],lyric_info[idx][-1]))
-    print(point['爱情转移'], seg['爱情转移'][np.argmin(abs(np.array(seg['爱情转移']) - point['爱情转移']))])
-    print(seg['爱情转移'])
+        print('{}\t{}\t{}\t->{}\t{}\t{}\t{}'.format(idx, round(float(lyric_info[idx][-2]), 3), round(float(lyric_info[idx][0]), 3), round(float(lyric_info[idx][1]), 3), seg_points[idx], seg_points_v3[idx], lyric_info[idx][-1]))
+    print(point['最炫民族风'], seg['最炫民族风'][np.argmin(abs(np.array(seg['最炫民族风']) - point['最炫民族风']))])
+    print(seg['最炫民族风'])
+    print(seg_v3['最炫民族风'])
 
     # main()
 
