@@ -1,8 +1,9 @@
 #import chorus.get_chorus as get_chorus
 from chorus.get_segment_audio_txt import main, get_lyric_seg
-import os, msaf, json, jams, codecs
+import os, msaf, json, jams, codecs, sys
 from tqdm import tqdm
 import numpy as np
+
 
 root = 'data'
 songs_root = os.path.join(root, 'songs')
@@ -15,10 +16,11 @@ class paragraph_parser():
         self.sentence = lyric_info[:, -1]   #   句子文本
         self.start = lyric_info[:, 0].astype(np.float)  #   每句开始
         self.end = lyric_info[:, 1].astype(np.float)    #   每句结束
-        self.duration = lyric_info[:, 3].astype(np.float)   #   最炫民族风前句与上一句间隔
+        self.duration = lyric_info[:, 3].astype(np.float)   #   王妃前句与上一句间隔
         self.seg_candidate = seg_point  #   msaf的分割点
         self.chorus_pre = chorus_pre
     
+
     def get_intro(self):    #   得到前奏    begin_silence = intro[0]
         vocal_start = self.start[0]
         intro = []
@@ -82,6 +84,83 @@ class paragraph_parser():
         
         return seg_points
 
+    def get_candidate_seg_sentence_v2(self):   #   得到分割句子
+        seg_candidate = self.seg_candidate.copy()
+        seg_points = np.zeros((len(self.start),))
+        seg_points[0] = 1
+        start_point = seg_candidate.pop(0)  #   掐头
+        while start_point < self.start[0] + 2:
+            start_point = seg_candidate.pop(0)
+        seg_candidate.insert(0, start_point)
+        end_point = seg_candidate.pop()    #   去尾
+        while end_point > self.end[-1] - 2:
+            end_point = seg_candidate.pop()
+        seg_candidate.insert(-1, end_point)
+        for point in seg_candidate:
+            for idx in range(len(self.start)):
+                if self.start[idx] < point < self.end[idx]:
+                    if idx < len(self.start) - 1 and self.duration[idx] > self.duration[idx+1]:
+                        seg_points[idx] = 1
+                    elif idx < len(self.start) - 1:
+                        if point - self.start[idx] > self.end[idx] - point:     # point距离后面近
+                            seg_points[idx+1] = 1
+                        elif 2*(self.duration[idx+1]-self.duration[idx]) > (self.end[idx]+self.start[idx]-2*point)/(self.end[idx]-self.start[idx]): # point离前面近，比较
+                            seg_points[idx+1] = 1
+                        else:
+                            seg_points[idx] = 1
+                    else:
+                        pass
+                elif idx < len(self.start) - 1 and self.end[idx] <= point <= self.start[idx+1]:
+                    seg_points[idx+1] = 1
+                else:
+                    pass
+        
+        return seg_points
+
+def seg_out_no_print(name):     # 对比得到分割句子两种方法
+    audio_name = name
+    with codecs.open('30songs_seg.json', mode='r', encoding='GBK') as f:
+        seg = json.load(f)
+    with codecs.open('30songs_seg_v3.json', mode='r', encoding='GBK') as f:
+        seg_v3 = json.load(f)
+    with codecs.open('highlight.json', mode='r', encoding='GBK') as f:
+        point = json.load(f)
+    lyric_info = get_lyric_seg(os.path.join(lyric_root, audio_name + '.txt'))
+
+    pp = paragraph_parser(lyric_info, seg[audio_name], point[audio_name])
+    pp_v3 = paragraph_parser(lyric_info, seg_v3[audio_name], point[audio_name])
+    seg_points = pp.get_candidate_seg_sentence()
+    seg_points_v3 = pp_v3.get_candidate_seg_sentence()
+    seg_points_v3_v2 = pp_v3.get_candidate_seg_sentence_v2()
+    # for idx in range(lyric_info.shape[0]):
+    #     print('{}\t{}\t{}\t->{}\t{}\t{}\t{}\t{}'.format(idx, round(float(lyric_info[idx][-2]), 3), round(float(lyric_info[idx][0]), 3), round(float(lyric_info[idx][1]), 3), seg_points[idx], seg_points_v3[idx], seg_points_v3_v2[idx], lyric_info[idx][-1]))
+    # print(point[audio_name], seg[audio_name][np.argmin(abs(np.array(seg[audio_name]) - point[audio_name]))])
+    # print(seg[audio_name])
+    # print(seg_v3[audio_name])
+    return (seg_points_v3 == seg_points_v3_v2).all()
+
+def seg_out_print(name):     # 对比得到分割句子两种方法
+    audio_name = name
+    with codecs.open('30songs_seg.json', mode='r', encoding='GBK') as f:
+        seg = json.load(f)
+    with codecs.open('30songs_seg_v3.json', mode='r', encoding='GBK') as f:
+        seg_v3 = json.load(f)
+    with codecs.open('highlight.json', mode='r', encoding='GBK') as f:
+        point = json.load(f)
+    lyric_info = get_lyric_seg(os.path.join(lyric_root, audio_name + '.txt'))
+
+    pp = paragraph_parser(lyric_info, seg[audio_name], point[audio_name])
+    pp_v3 = paragraph_parser(lyric_info, seg_v3[audio_name], point[audio_name])
+    seg_points = pp.get_candidate_seg_sentence()
+    seg_points_v3 = pp_v3.get_candidate_seg_sentence()
+    seg_points_v3_v2 = pp_v3.get_candidate_seg_sentence_v2()
+    for idx in range(lyric_info.shape[0]):
+        print('{}\t{}\t{}\t->{}\t{}\t{}\t{}\t{}'.format(idx, round(float(lyric_info[idx][-2]), 3), round(float(lyric_info[idx][0]), 3), round(float(lyric_info[idx][1]), 3), seg_points[idx], seg_points_v3[idx], seg_points_v3_v2[idx], lyric_info[idx][-1]))
+    print(point[audio_name], seg[audio_name][np.argmin(abs(np.array(seg[audio_name]) - point[audio_name]))])
+    print(seg[audio_name])
+    print(seg_v3[audio_name])
+    # return (seg_points_v3 == seg_points_v3_v2).all()
+
 if __name__ == '__main__':
     '''
     names = [song.split('.')[0] for song in os.listdir(songs_root)]
@@ -92,22 +171,20 @@ if __name__ == '__main__':
         lyricPath.append(lyric_root + '/' + name + '.txt')
     np.save('./data/chorus_audio/{}.npy'.format('30songs_highlights'), get_chorus.extract(songPath, accPath, lyricPath, save_wav=False))
     '''
-    with codecs.open('30songs_seg.json', mode='r', encoding='GBK') as f:
-        seg = json.load(f)
-    with codecs.open('30songs_seg_v3.json', mode='r', encoding='GBK') as f:
-        seg_v3 = json.load(f)
-    with codecs.open('highlight.json', mode='r', encoding='GBK') as f:
-        point = json.load(f)
-    lyric_info = get_lyric_seg(os.path.join(lyric_root, '最炫民族风' + '.txt'))
-    pp = paragraph_parser(lyric_info, seg['最炫民族风'], point['最炫民族风'])
-    pp_v3 = paragraph_parser(lyric_info, seg_v3['最炫民族风'], point['最炫民族风'])
-    seg_points = pp.get_candidate_seg_sentence()
-    seg_points_v3 = pp_v3.get_candidate_seg_sentence()
-    for idx in range(lyric_info.shape[0]):
-        print('{}\t{}\t{}\t->{}\t{}\t{}\t{}'.format(idx, round(float(lyric_info[idx][-2]), 3), round(float(lyric_info[idx][0]), 3), round(float(lyric_info[idx][1]), 3), seg_points[idx], seg_points_v3[idx], lyric_info[idx][-1]))
-    print(point['最炫民族风'], seg['最炫民族风'][np.argmin(abs(np.array(seg['最炫民族风']) - point['最炫民族风']))])
-    print(seg['最炫民族风'])
-    print(seg_v3['最炫民族风'])
+    audios = os.listdir("./data/songs")
+    audios_diff = []    # 找出2种方法得到结果不同的，显示出来进行对照
+    for audio in audios:
+        res = seg_out_no_print(audio[:-4])
+        if res:
+            pass
+        else:
+            audios_diff.append(audio[:-4])
+    print(audios_diff)
+    for audio in audios_diff:
+        print(audio)
+        seg_out_print(audio)
+
+    
 
     # main()
 
