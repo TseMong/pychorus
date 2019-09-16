@@ -117,7 +117,50 @@ class paragraph_parser():
         
         return seg_points
 
-def seg_out_no_print(name):     # 对比得到分割句子两种方法
+    
+    def get_time_slice(self):       # 输出切割后段落时间
+        seg_points = self.get_candidate_seg_sentence_v2()
+        seg_points[-1] = 0
+        for idx in range(len(seg_points)):
+            if seg_points[idx] == 1 and idx + 3 < len(seg_points):
+                seg_points[idx+1] = 0
+                seg_points[idx+2] = 0
+        for idx in range(len(self.duration)):
+            if self.duration[idx] > 5:  # 很大的duration需要切
+                seg_points[idx] = 1
+                try:
+                    seg_points[idx-1] = 0
+                except:
+                    pass
+                try:
+                    seg_points[idx-2] = 0
+                except:
+                    pass
+                try:
+                    seg_points[idx+1] = 0
+                except:
+                    pass
+                try:
+                    seg_points[idx+2] = 0
+                except:
+                    pass
+        seg_idx = []
+        for idx in range(len(seg_points)):
+            if seg_points[idx] == 1:
+                seg_idx.append(idx)
+        assert len(seg_idx) != 0
+        # print(seg_idx)
+        # print(seg_points)
+        time_slice = []
+        for i in range(0, len(seg_idx) - 1):
+            time_slice.append([self.start[seg_idx[i]], self.end[seg_idx[i+1]-1]])
+        time_slice.append([self.start[seg_idx[-1]], self.end[len(seg_points) - 1]])
+        return seg_points, time_slice           # time_slice为歌曲每节[start, end]
+
+
+
+
+def seg_out_no_print(name):     # 对比得到分割句子两种方法 没有print
     audio_name = name
     with codecs.open('30songs_seg.json', mode='r', encoding='GBK') as f:
         seg = json.load(f)
@@ -131,7 +174,7 @@ def seg_out_no_print(name):     # 对比得到分割句子两种方法
     pp_v3 = paragraph_parser(lyric_info, seg_v3[audio_name], point[audio_name])
     seg_points = pp.get_candidate_seg_sentence()
     seg_points_v3 = pp_v3.get_candidate_seg_sentence()
-    seg_points_v3_v2 = pp_v3.get_candidate_seg_sentence_v2()
+    seg_points_v3_v2, _ = pp_v3.get_time_slice()
     # for idx in range(lyric_info.shape[0]):
     #     print('{}\t{}\t{}\t->{}\t{}\t{}\t{}\t{}'.format(idx, round(float(lyric_info[idx][-2]), 3), round(float(lyric_info[idx][0]), 3), round(float(lyric_info[idx][1]), 3), seg_points[idx], seg_points_v3[idx], seg_points_v3_v2[idx], lyric_info[idx][-1]))
     # print(point[audio_name], seg[audio_name][np.argmin(abs(np.array(seg[audio_name]) - point[audio_name]))])
@@ -153,13 +196,16 @@ def seg_out_print(name):     # 对比得到分割句子两种方法
     pp_v3 = paragraph_parser(lyric_info, seg_v3[audio_name], point[audio_name])
     seg_points = pp.get_candidate_seg_sentence()
     seg_points_v3 = pp_v3.get_candidate_seg_sentence()
-    seg_points_v3_v2 = pp_v3.get_candidate_seg_sentence_v2()
+    seg_points_v3_v2, time_slice = pp_v3.get_time_slice()
     for idx in range(lyric_info.shape[0]):
         print('{}\t{}\t{}\t->{}\t{}\t{}\t{}\t{}'.format(idx, round(float(lyric_info[idx][-2]), 3), round(float(lyric_info[idx][0]), 3), round(float(lyric_info[idx][1]), 3), seg_points[idx], seg_points_v3[idx], seg_points_v3_v2[idx], lyric_info[idx][-1]))
     print(point[audio_name], seg[audio_name][np.argmin(abs(np.array(seg[audio_name]) - point[audio_name]))])
     print(seg[audio_name])
     print(seg_v3[audio_name])
+    print(time_slice)
     # return (seg_points_v3 == seg_points_v3_v2).all()
+
+    
 
 if __name__ == '__main__':
     '''
@@ -171,21 +217,22 @@ if __name__ == '__main__':
         lyricPath.append(lyric_root + '/' + name + '.txt')
     np.save('./data/chorus_audio/{}.npy'.format('30songs_highlights'), get_chorus.extract(songPath, accPath, lyricPath, save_wav=False))
     '''
-    audios = os.listdir("./data/songs")
-    audios_diff = []    # 找出2种方法得到结果不同的，显示出来进行对照
-    for audio in audios:
-        res = seg_out_no_print(audio[:-4])
-        if res:
-            pass
-        else:
-            audios_diff.append(audio[:-4])
-    print(audios_diff)
-    for audio in audios_diff:
-        print(audio)
-        seg_out_print(audio)
+    # audios = os.listdir("./data/songs")
+    # audios_diff = []    # 找出2种方法得到结果不同的，显示出来进行对照
+    # for audio in audios:
+    #     res = seg_out_no_print(audio[:-4])
+    #     if res:
+    #         pass
+    #     else:
+    #         audios_diff.append(audio[:-4])
+    # print(audios_diff)
+    # for audio in audios_diff:
+    #     print(audio)
+    #     seg_out_print(audio)
+    seg_out_print("十年")
+
 
     
-
     # main()
 
     
