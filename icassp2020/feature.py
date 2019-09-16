@@ -17,8 +17,17 @@ def get_melScale_logSpectrogram(y, sr):
     args:   y, sr
     output: times * 128 np.array
     '''
+    def normalize(X):
+        X = X.reshape((128, -1))
+        means = X.mean(axis=1)
+        stds = X.std(axis= 1, ddof=1)
+        X= X - means[:, np.newaxis]
+        X= X / stds[:, np.newaxis]
+        return X.reshape((-1, 128))
     S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000)
-    return np.transpose(np.log(1+10000*S))
+    S = np.transpose(np.log(1+10000*S))
+    return normalize(S)
+    #return S
 
 def get_beats_msls(filepath, beats=[]):   #   read beats from annotations
 
@@ -37,4 +46,7 @@ def get_beats_msls(filepath, beats=[]):   #   read beats from annotations
     ###                                     ###
     ###########################################
     return lstm_input
+
+if __name__ == '__main__':
+    pass
     
